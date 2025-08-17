@@ -58,12 +58,29 @@ function rollDice() {
     // Відображення результату з анімацією
     const resultEl = document.getElementById('dice-result');
     const animationEl = document.getElementById('dice-animation');
-    resultEl.textContent = '';
+    
+    // Очищення попереднього результату та класів анімації
+    resultEl.innerHTML = '';
+    resultEl.classList.remove('revealing');
     animationEl.classList.add('rolling');
     
     setTimeout(() => {
         animationEl.classList.remove('rolling');
-        resultEl.textContent = total;
+
+        // Підготовка результату для анімації "чорнил"
+        const totalStr = total.toString();
+        const digitsHTML = totalStr.split('').map((digit, index) => {
+            // Додавання трохи різної затримки для більш природного вигляду
+            const delay = index * 0.1 + Math.random() * 0.1;
+            return `<span style="animation-delay: ${delay}s;">${digit}</span>`;
+        }).join('');
+        
+        resultEl.innerHTML = digitsHTML;
+        // Використання requestAnimationFrame для гарантії, що клас буде додано після оновлення DOM
+        requestAnimationFrame(() => {
+            resultEl.classList.add('revealing');
+        });
+
     }, 500);
 }
 

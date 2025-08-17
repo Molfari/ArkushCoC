@@ -6,9 +6,18 @@ import { initDiceRoller } from './utils/diceRoller.js';
 const MAX_CHARACTERS = 4;
 let characters = [];
 let activeCharacterId = null;
+let cropper = null;
 
 const defaultCharacter = {
-    info: { name: 'Новий Дослідник', occupation: '', player: '', age: 30, gender: '', birthplace: '', residence: '' },
+    info: { 
+        name: 'Новий Дослідник', 
+        occupation: '', 
+        age: 30, 
+        gender: '', 
+        birthplace: '', 
+        residence: '',
+        portrait: ''
+    },
     stats: { str: 50, con: 50, siz: 50, dex: 50, app: 50, int: 50, pow: 50, edu: 50 },
     currentStats: { hp_current: 10, mp_current: 10, san_current: 50, san_max: 99 },
     skills: {},
@@ -83,10 +92,22 @@ function renderCharacterSheet() {
     const char = characters.find(c => c.id === activeCharacterId);
     if (!char) { showCharacterSelection(); return; }
     
+    // Render info fields and portrait
     for (const key in char.info) {
-        const el = document.getElementById(key);
-        if (el) el.value = char.info[key];
+        if (key !== 'portrait') {
+            const el = document.getElementById(key);
+            if (el) el.value = char.info[key];
+        }
     }
+    const portraitContainer = document.getElementById('portrait-container');
+    if (char.info.portrait) {
+        portraitContainer.style.backgroundImage = `url(${char.info.portrait})`;
+        portraitContainer.textContent = '';
+    } else {
+        portraitContainer.style.backgroundImage = 'none';
+        portraitContainer.textContent = 'Натисніть, щоб завантажити фото';
+    }
+
     for (const key in char.stats) {
         const el = document.getElementById(key);
         if (el) el.value = char.stats[key];
@@ -240,8 +261,20 @@ function deleteInventoryItem(index) {
 // --- ІНІЦІАЛІЗАЦІЯ ТА СЛУХАЧІ ПОДІЙ ---
 function init() {
     // Генерація HTML
-    const infoContainer = document.getElementById('info-container');
-    infoContainer.innerHTML = `<div><label>Ім'я</label><input type="text" id="name"></div> <div><label>Рід занять</label><input type="text" id="occupation"></div> <div><label>Гравець</label><input type="text" id="player"></div> <div><label>Вік</label><input type="number" id="age"></div> <div><label>Стать</label><input type="text" id="gender"></div> <div><label>Місце народження</label><input type="text" id="birthplace"></div> <div><label>Місце проживання</label><input type="text" id="residence"></div>`;
+    const headerContainer = document.getElementById('character-header-container');
+    headerContainer.innerHTML = `
+        <div class="info-fields">
+            <div><label>Ім’я</label><input type="text" id="name"></div>
+            <div><label>Рід занять</label><input type="text" id="occupation"></div>
+            <div><label>Місце народження</label><input type="text" id="birthplace"></div>
+            <div><label>Місце проживання</label><input type="text" id="residence"></div>
+            <div><label>Стать</label><input type="text" id="gender"></div>
+            <div><label>Вік</label><input type="number" id="age"></div>
+        </div>
+        <div id="portrait-container" class="portrait-container">
+            Натисніть, щоб завантажити фото
+        </div>
+    `;
 
     const statsContainer = document.getElementById('stats-container');
     statsContainer.innerHTML = ['str', 'con', 'siz', 'dex', 'app', 'int', 'pow', 'edu'].map(s => `<div class="char-box"><label>${s.toUpperCase()}</label><div class="value-split"><div class="main-value"><input type="number" id="${s}"></div><div class="half-value" id="${s}_half"></div><div class="fifth-value" id="${s}_fifth"></div></div></div>`).join('');
@@ -352,6 +385,61 @@ function init() {
     
     // Ініціалізація дайс-роллера
     initDiceRoller();
+
+    // Cropper.js Logic
+    const cropperModal = document.getElementById('cropper-modal');
+    const imageInput = document.getElementById('image-input');
+    const cropperImage = document.getElementById('cropper-image');
+
+    document.getElementById('character-header-container').addEventListener('click', (e) => {
+        if (e.target.id === 'portrait-container') {
+            imageInput.click();
+        }
+    });
+
+    imageInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                cropperModal.classList.remove('hidden');
+                cropperImage.src = reader.result;
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 3 / 4,
+                    viewMode: 1,
+                });
+            };
+            reader.readAsDataURL(files[0]);
+        }
+        // Reset input value to allow re-uploading the same file
+        e.target.value = '';
+    });
+    
+    document.getElementById('crop-save-btn').addEventListener('click', () => {
+        if (cropper) {
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,
+                height: 400,
+            });
+            const char = characters.find(c => c.id === activeCharacterId);
+            if (char) {
+                char.info.portrait = canvas.toDataURL('image/jpeg');
+                saveCharactersToStorage();
+                renderCharacterSheet();
+            }
+            cropper.destroy();
+            cropper = null;
+            cropperModal.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('crop-cancel-btn').addEventListener('click', () => {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        cropperModal.classList.add('hidden');
+    });
 
     // Запуск
     loadCharactersFromStorage();
