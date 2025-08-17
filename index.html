@@ -52,9 +52,9 @@
                 <div class="tabs">
                     <button class="tab-button active" data-tab="character-sheet">Персонаж</button>
                     <button class="tab-button" data-tab="backstory-sheet">Нотатки</button>
+                    <button class="tab-button" data-tab="inventory-sheet">Інвентар</button>
                 </div>
                 <div id="character-sheet" class="tab-content active">
-                    <h1>Лист Дослідника</h1>
                     <div class="header-grid" id="info-container"></div>
                     <h2>Характеристики</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="stats-container"></div>
@@ -95,6 +95,14 @@
                     </div>
                     <div class="text-center mt-4">
                         <button id="add-note-btn" class="add-character-btn">Додати запис</button>
+                    </div>
+                </div>
+                <div id="inventory-sheet" class="tab-content">
+                    <div id="inventory-container">
+                        <!-- Інвентар генерується тут -->
+                    </div>
+                    <div class="text-center mt-4">
+                        <button id="add-inventory-item-btn" class="add-character-btn">Додати предмет</button>
                     </div>
                 </div>
             </div>

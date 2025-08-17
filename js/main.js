@@ -13,7 +13,8 @@ const defaultCharacter = {
     currentStats: { hp_current: 10, mp_current: 10, san_current: 50, san_max: 99 },
     skills: {},
     backstory: { description: '', traits: '', beliefs: '', people: '' },
-    notes: []
+    notes: [],
+    inventory: []
 };
 
 // --- УПРАВЛІННЯ ДАНИМИ (localStorage) ---
@@ -99,6 +100,7 @@ function renderCharacterSheet() {
         if(el) el.value = char.backstory[key];
     }
     renderNotes();
+    renderInventory();
     updateUI();
 }
 
@@ -184,6 +186,57 @@ function deleteNote(index) {
     renderNotes();
 }
 
+// --- ЛОГІКА ІНВЕНТАРЯ ---
+function renderInventory() {
+    const char = characters.find(c => c.id === activeCharacterId);
+    if (!char) return;
+    const container = document.getElementById('inventory-container');
+    container.innerHTML = `
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th class="item-name-col">Предмет</th>
+                    <th class="quantity-col">Кількість</th>
+                    <th class="delete-col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                ${(char.inventory || []).map((item, index) => `
+                    <tr>
+                        <td><input type="text" class="inventory-item-name" data-index="${index}" value="${item.name}"></td>
+                        <td class="quantity-col"><input type="number" class="inventory-item-quantity" data-index="${index}" value="${item.quantity}" min="0"></td>
+                        <td class="delete-col"><button class="delete-inventory-item-btn" data-index="${index}">&times;</button></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function addInventoryItem() {
+    const char = characters.find(c => c.id === activeCharacterId);
+    if (!char) return;
+    if (!char.inventory) char.inventory = [];
+    char.inventory.push({ name: 'Новий предмет', quantity: 1 });
+    saveCharactersToStorage();
+    renderInventory();
+}
+
+function updateInventoryItem(index, field, value) {
+    const char = characters.find(c => c.id === activeCharacterId);
+    if (!char || !char.inventory || !char.inventory[index]) return;
+    char.inventory[index][field] = value;
+    saveCharactersToStorage();
+}
+
+function deleteInventoryItem(index) {
+    const char = characters.find(c => c.id === activeCharacterId);
+    if (!char || !char.inventory || !char.inventory[index]) return;
+    char.inventory.splice(index, 1);
+    saveCharactersToStorage();
+    renderInventory();
+}
+
 // --- ІНІЦІАЛІЗАЦІЯ ТА СЛУХАЧІ ПОДІЙ ---
 function init() {
     // Генерація HTML
@@ -209,6 +262,7 @@ function init() {
     document.getElementById('add-character-btn').addEventListener('click', createCharacter);
     document.getElementById('back-to-selection-btn').addEventListener('click', showCharacterSelection);
     document.getElementById('add-note-btn').addEventListener('click', addNote);
+    document.getElementById('add-inventory-item-btn').addEventListener('click', addInventoryItem);
 
     document.getElementById('characters-list').addEventListener('click', e => {
         if (e.target.classList.contains('delete-character-btn')) {
@@ -264,6 +318,22 @@ function init() {
             e.preventDefault();
             const command = formatBtn.dataset.command;
             document.execCommand(command, false, null);
+        }
+    });
+
+    const inventoryContainer = document.getElementById('inventory-container');
+    inventoryContainer.addEventListener('input', e => {
+        const index = e.target.dataset.index;
+        if (index === undefined) return;
+        if (e.target.classList.contains('inventory-item-name')) {
+            updateInventoryItem(index, 'name', e.target.value);
+        } else if (e.target.classList.contains('inventory-item-quantity')) {
+            updateInventoryItem(index, 'quantity', parseInt(e.target.value, 10) || 0);
+        }
+    });
+    inventoryContainer.addEventListener('click', e => {
+        if (e.target.classList.contains('delete-inventory-item-btn')) {
+            deleteInventoryItem(e.target.dataset.index);
         }
     });
 

@@ -427,3 +427,47 @@ input[readonly] {
     cursor: pointer;
     color: #c0392b;
 }
+
+/* Inventory */
+.inventory-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+}
+.inventory-table th, .inventory-table td {
+    border: 1px solid #8a7a6a;
+    padding: 0.5rem;
+    text-align: left;
+    vertical-align: middle;
+}
+.inventory-table th {
+    font-size: 0.8rem;
+    text-align: center;
+}
+.inventory-table .item-name-col {
+    width: 70%;
+}
+.inventory-table .quantity-col {
+    text-align: center;
+}
+.inventory-table .delete-col {
+    border: none;
+    text-align: center;
+}
+.inventory-table input {
+    border-bottom: 1px dotted #3a3a3a;
+}
+.inventory-table input[type="number"] {
+    text-align: center;
+    width: 60px;
+    display: inline-block;
+}
+.delete-inventory-item-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #c0392b;
+    padding: 0;
+    line-height: 1;
+}
