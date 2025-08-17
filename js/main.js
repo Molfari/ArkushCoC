@@ -49,11 +49,11 @@ function createCharacter() {
 }
 
 function deleteCharacter(id) {
-    if (confirm('Ви впевнені, що хочете видалити цього дослідника?')) {
+    showConfirmationModal('Ви впевнені, що хочете видалити цього дослідника?', () => {
         characters = characters.filter(char => char.id !== id);
         saveCharactersToStorage();
-        renderCharacterSelection();
-    }
+        showCharacterSelection();
+    });
 }
 
 // --- УПРАВЛІННЯ ВИДОМ (ЕКРАНАМИ) ---
@@ -200,11 +200,13 @@ function updateNote(index, field, value) {
 }
 
 function deleteNote(index) {
-    const char = characters.find(c => c.id === activeCharacterId);
-    if (!char || !char.notes || !char.notes[index]) return;
-    char.notes.splice(index, 1);
-    saveCharactersToStorage();
-    renderNotes();
+    showConfirmationModal('Ви впевнені, що хочете видалити цю нотатку?', () => {
+        const char = characters.find(c => c.id === activeCharacterId);
+        if (!char || !char.notes || !char.notes[index]) return;
+        char.notes.splice(index, 1);
+        saveCharactersToStorage();
+        renderNotes();
+    });
 }
 
 // --- ЛОГІКА ІНВЕНТАРЯ ---
@@ -251,11 +253,31 @@ function updateInventoryItem(index, field, value) {
 }
 
 function deleteInventoryItem(index) {
-    const char = characters.find(c => c.id === activeCharacterId);
-    if (!char || !char.inventory || !char.inventory[index]) return;
-    char.inventory.splice(index, 1);
-    saveCharactersToStorage();
-    renderInventory();
+    showConfirmationModal('Ви впевнені, що хочете видалити цей предмет?', () => {
+        const char = characters.find(c => c.id === activeCharacterId);
+        if (!char || !char.inventory || !char.inventory[index]) return;
+        char.inventory.splice(index, 1);
+        saveCharactersToStorage();
+        renderInventory();
+    });
+}
+
+// --- Confirmation Modal Logic ---
+const confirmationModal = document.getElementById('confirmation-modal');
+const confirmationMessage = document.getElementById('confirmation-message');
+const confirmYesBtn = document.getElementById('confirm-yes-btn');
+const confirmNoBtn = document.getElementById('confirm-no-btn');
+let onConfirmCallback = null;
+
+function showConfirmationModal(message, callback) {
+    confirmationMessage.textContent = message;
+    onConfirmCallback = callback;
+    confirmationModal.classList.remove('hidden');
+}
+
+function hideConfirmationModal() {
+    confirmationModal.classList.add('hidden');
+    onConfirmCallback = null;
 }
 
 // --- ІНІЦІАЛІЗАЦІЯ ТА СЛУХАЧІ ПОДІЙ ---
@@ -307,7 +329,7 @@ function init() {
 
     document.getElementById('character-sheet-screen').addEventListener('input', e => {
         const char = characters.find(c => c.id === activeCharacterId);
-        if (!char || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) return;
+        if (!char || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.contentEditable !== 'true')) return;
         
         const id = e.target.id;
         const value = e.target.type === 'number' ? (parseInt(e.target.value, 10) || 0) : e.target.value;
@@ -370,12 +392,13 @@ function init() {
         }
     });
 
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', e => {
-            document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
-            e.target.classList.add('active');
-            document.getElementById(e.target.dataset.tab).classList.add('active');
-        });
+    sheetScreen.querySelector('.tabs').addEventListener('click', e => {
+        const tabButton = e.target.closest('.tab-button');
+        if (tabButton) {
+            sheetScreen.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+            tabButton.classList.add('active');
+            document.getElementById(tabButton.dataset.tab).classList.add('active');
+        }
     });
 
     // Модальні вікна
@@ -439,6 +462,18 @@ function init() {
             cropper = null;
         }
         cropperModal.classList.add('hidden');
+    });
+
+    // Confirmation Modal Listeners
+    confirmYesBtn.addEventListener('click', () => {
+        if (onConfirmCallback) {
+            onConfirmCallback();
+        }
+        hideConfirmationModal();
+    });
+
+    confirmNoBtn.addEventListener('click', () => {
+        hideConfirmationModal();
     });
 
     // Запуск
