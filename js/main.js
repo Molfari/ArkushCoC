@@ -21,9 +21,15 @@ const defaultCharacter = {
     stats: { str: 50, con: 50, siz: 50, dex: 50, app: 50, int: 50, pow: 50, edu: 50 },
     currentStats: { hp_current: 10, mp_current: 10, san_current: 50, san_max: 99 },
     skills: {},
+    checkedSkills: {},
     backstory: { description: '', traits: '', beliefs: '', people: '' },
     notes: [],
     inventory: []
+};
+
+const statTranslations = {
+    str: 'СИЛ', con: 'СТА', siz: 'РОЗ', dex: 'СПР', 
+    app: 'ЗОВ', int: 'ІНТ', pow: 'ВОЛ', edu: 'ОСВ'
 };
 
 // --- УПРАВЛІННЯ ДАНИМИ (localStorage) ---
@@ -61,9 +67,9 @@ const selectionScreen = document.getElementById('character-selection-screen');
 const sheetScreen = document.getElementById('character-sheet-screen');
 
 function showCharacterSelection() {
+    activeCharacterId = null;
     selectionScreen.classList.remove('hidden');
     sheetScreen.classList.add('hidden');
-    activeCharacterId = null;
     renderCharacterSelection();
 }
 
@@ -74,6 +80,7 @@ function showCharacterSheet(id) {
     renderCharacterSheet();
 }
 
+
 // --- РЕНДЕРИНГ (ВІДОБРАЖЕННЯ ДАНИХ) ---
 function renderCharacterSelection() {
     const list = document.getElementById('characters-list');
@@ -82,7 +89,28 @@ function renderCharacterSelection() {
         const card = document.createElement('div');
         card.className = 'character-card';
         card.dataset.id = char.id;
-        card.innerHTML = `<h3>${char.info.name || 'Без імені'}</h3><p>${char.info.occupation || 'Рід занять'}</p><button class="delete-character-btn" data-id="${char.id}">&times;</button>`;
+
+        const photoDiv = document.createElement('div');
+        photoDiv.className = 'character-card-photo';
+        if (char.info.portrait) {
+            photoDiv.style.backgroundImage = `url(${char.info.portrait})`;
+        } else {
+            photoDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+        }
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'character-card-info';
+        infoDiv.innerHTML = `<h3>${char.info.name || 'Без імені'}</h3><p>${char.info.occupation || 'Рід занять'}</p>`;
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-character-btn';
+        deleteBtn.dataset.id = char.id;
+        deleteBtn.innerHTML = '&times;';
+        
+        card.appendChild(photoDiv);
+        card.appendChild(infoDiv);
+        card.appendChild(deleteBtn);
+        
         list.appendChild(card);
     });
     document.getElementById('add-character-btn').disabled = characters.length >= MAX_CHARACTERS;
@@ -120,6 +148,15 @@ function renderCharacterSheet() {
         const el = document.querySelector(`#backstory-sheet textarea[data-field="${key}"]`);
         if(el) el.value = char.backstory[key];
     }
+    
+    skillsData.forEach(skill => {
+        const skillId = skill.name.toLowerCase().replace(/[\s()/]/g, '_');
+        const checkbox = document.getElementById(`${skillId}_check`);
+        if(checkbox) {
+            checkbox.checked = char.checkedSkills ? (char.checkedSkills[skillId] || false) : false;
+        }
+    });
+
     renderNotes();
     renderInventory();
     updateUI();
@@ -299,7 +336,16 @@ function init() {
     `;
 
     const statsContainer = document.getElementById('stats-container');
-    statsContainer.innerHTML = ['str', 'con', 'siz', 'dex', 'app', 'int', 'pow', 'edu'].map(s => `<div class="char-box"><label>${s.toUpperCase()}</label><div class="value-split"><div class="main-value"><input type="number" id="${s}"></div><div class="half-value" id="${s}_half"></div><div class="fifth-value" id="${s}_fifth"></div></div></div>`).join('');
+    statsContainer.innerHTML = Object.keys(statTranslations).map(key => 
+        `<div class="char-box">
+            <label>${statTranslations[key]}</label>
+            <div class="value-split">
+                <div class="main-value"><input type="number" id="${key}"></div>
+                <div class="half-value" id="${key}_half"></div>
+                <div class="fifth-value" id="${key}_fifth"></div>
+            </div>
+        </div>`
+    ).join('');
 
     const currentStatsContainer = document.getElementById('current-stats-container');
     currentStatsContainer.innerHTML = `<div class="stat-box"><label>Очки здоров'я</label><div class="stat-values"><div><input type="number" id="hp_current"><label>Поточне</label></div><div><input type="number" id="hp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Очки магії</label><div class="stat-values"><div><input type="number" id="mp_current"><label>Поточне</label></div><div><input type="number" id="mp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Глузд</label><div class="stat-values"><div><input type="number" id="san_current"><label>Поточний</label></div><div><input type="number" id="san_start" readonly><label>Початк.</label></div></div></div> <div class="stat-box"><label>Макс. глузд</label><div class="stat-values san-max-container"><input type="number" id="san_max"></div></div>`;
@@ -310,7 +356,15 @@ function init() {
     const skillsContainer = document.getElementById('skills-container');
     skillsContainer.innerHTML = skillsData.map(skill => {
         const skillId = skill.name.toLowerCase().replace(/[\s()/]/g, '_');
-        return `<div class="skill-item"><label>${skill.name} (${skill.base}%):</label><div class="skill-value-box"><input type="number" id="${skillId}" ${skill.readonly ? 'readonly' : ''}><span id="${skillId}_half"></span><span id="${skillId}_fifth"></span></div></div>`;
+        return `<div class="skill-item">
+                    <input type="checkbox" class="skill-checkbox" id="${skillId}_check" data-skill-id="${skillId}">
+                    <label for="${skillId}_check">${skill.name} (${skill.base}%):</label>
+                    <div class="skill-value-box">
+                        <input type="number" id="${skillId}" ${skill.readonly ? 'readonly' : ''}>
+                        <span id="${skillId}_half"></span>
+                        <span id="${skillId}_fifth"></span>
+                    </div>
+                </div>`;
     }).join('');
 
     // Слухачі подій
@@ -327,9 +381,19 @@ function init() {
         }
     });
 
-    document.getElementById('character-sheet-screen').addEventListener('input', e => {
+    sheetScreen.addEventListener('input', e => {
         const char = characters.find(c => c.id === activeCharacterId);
-        if (!char || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.contentEditable !== 'true')) return;
+        if (!char) return;
+
+        if (e.target.classList.contains('skill-checkbox')) {
+            const skillId = e.target.dataset.skillId;
+            if (!char.checkedSkills) char.checkedSkills = {};
+            char.checkedSkills[skillId] = e.target.checked;
+            saveCharactersToStorage();
+            return;
+        }
+
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.contentEditable !== 'true') return;
         
         const id = e.target.id;
         const value = e.target.type === 'number' ? (parseInt(e.target.value, 10) || 0) : e.target.value;
@@ -395,7 +459,9 @@ function init() {
     sheetScreen.querySelector('.tabs').addEventListener('click', e => {
         const tabButton = e.target.closest('.tab-button');
         if (tabButton) {
-            sheetScreen.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+            sheetScreen.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            sheetScreen.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
             tabButton.classList.add('active');
             document.getElementById(tabButton.dataset.tab).classList.add('active');
         }
