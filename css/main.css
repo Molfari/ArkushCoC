@@ -72,6 +72,9 @@ input[type=number] {
     justify-content: center;
     overflow: hidden;
 }
+.character-card-photo[style*="background-image"] {
+    filter: sepia(60%);
+}
 .character-card-photo svg {
     width: 32px;
     height: 32px;
