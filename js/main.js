@@ -55,6 +55,9 @@ function createCharacter() {
     }
     const newCharacter = JSON.parse(JSON.stringify(defaultCharacter));
     newCharacter.id = Date.now().toString();
+    // Set initial current luck and sanity based on stats
+    newCharacter.currentStats.luck_current = newCharacter.stats.luck;
+    newCharacter.currentStats.san_current = newCharacter.stats.pow;
     characters.push(newCharacter);
     saveCharactersToStorage();
     showCharacterSheet(newCharacter.id);
@@ -150,6 +153,10 @@ function renderCharacterSheet() {
         const el = document.getElementById(key);
         if (el) el.value = char.currentStats[key];
     }
+
+    // Manually set initial luck value as it's not in currentStats
+    document.getElementById('luck_start').value = char.stats.luck;
+
     for (const key in char.backstory) {
         const el = document.querySelector(`#backstory-sheet textarea[data-field="${key}"]`);
         if(el) el.value = char.backstory[key];
@@ -189,9 +196,6 @@ function updateUI() {
     document.getElementById('san_start').value = pow;
     document.getElementById('san_insane').value = Math.floor(san_current / 5);
     
-    const luckStartEl = document.getElementById('luck_start');
-    if (luckStartEl) luckStartEl.value = luck;
-
     const { db, build } = calculateDBAndBuild(str, siz);
     document.getElementById('db').value = db;
     document.getElementById('build').value = build;
@@ -200,15 +204,25 @@ function updateUI() {
     
     skillsData.forEach(skill => {
         const skillId = skill.name.toLowerCase().replace(/[\s()/]/g, '_');
-        let value;
-        if (skill.base === 'edu') value = edu;
-        else if (skill.base === 'dex') value = Math.floor(dex / 2);
-        else value = char.skills[skillId] || skill.base;
-        
         const el = document.getElementById(skillId);
-        if (el && el.value != value) el.value = value;
-        document.getElementById(`${skillId}_half`).textContent = Math.floor(value / 2);
-        document.getElementById(`${skillId}_fifth`).textContent = Math.floor(value / 5);
+        const elHalf = document.getElementById(`${skillId}_half`);
+        const elFifth = document.getElementById(`${skillId}_fifth`);
+        const valueBox = el.closest('.skill-value-box');
+        const isChecked = char.checkedSkills && char.checkedSkills[skillId];
+
+        if (isChecked) {
+            valueBox.classList.add('skill-active');
+            const value = (char.skills[skillId] !== undefined) ? char.skills[skillId] : 0;
+            
+            if (el) el.value = value;
+            if (elHalf) elHalf.textContent = Math.floor(value / 2);
+            if (elFifth) elFifth.textContent = Math.floor(value / 5);
+        } else {
+            valueBox.classList.remove('skill-active');
+            if (el) el.value = '';
+            if (elHalf) elHalf.textContent = '';
+            if (elFifth) elFifth.textContent = '';
+        }
     });
 
     // Update weapon skills
@@ -217,8 +231,20 @@ function updateUI() {
             const skillValue = weapon.skill || 0;
             const halfEl = document.getElementById(`weapon_${index}_half`);
             const fifthEl = document.getElementById(`weapon_${index}_fifth`);
+            
             if (halfEl) halfEl.textContent = Math.floor(skillValue / 2);
             if (fifthEl) fifthEl.textContent = Math.floor(skillValue / 5);
+
+            if (halfEl) {
+                const valueBox = halfEl.closest('.skill-value-box');
+                if (valueBox) {
+                    if (skillValue > 0) {
+                        valueBox.classList.add('skill-active');
+                    } else {
+                        valueBox.classList.remove('skill-active');
+                    }
+                }
+            }
         });
     }
 }
@@ -411,7 +437,7 @@ function init() {
     ).join('');
     
     const currentStatsContainer = document.getElementById('current-stats-container');
-    currentStatsContainer.innerHTML = `<div class="stat-box"><label>Очки здоров'я</label><div class="stat-values"><div><input type="number" id="hp_current"><label>Поточне</label></div><div><input type="number" id="hp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Очки магії</label><div class="stat-values"><div><input type="number" id="mp_current"><label>Поточне</label></div><div><input type="number" id="mp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Талан</label><div class="stat-values"><div><input type="number" id="luck_start" readonly><label>Початк.</label></div><div><input type="number" id="luck_current"><label>Поточний</label></div></div></div> <div class="stat-box"><label>Глузд</label><div class="stat-values three-parts"><div><input type="number" id="san_start" readonly><label>Початк.</label></div><div><input type="number" id="san_current"><label>Поточний</label></div><div><input type="number" id="san_insane" readonly><label>Божевілля</label></div></div></div>`;
+    currentStatsContainer.innerHTML = `<div class="stat-box"><label>Очки здоров'я</label><div class="stat-values"><div><input type="number" id="hp_current"><label>Поточне</label></div><div><input type="number" id="hp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Очки магії</label><div class="stat-values"><div><input type="number" id="mp_current"><label>Поточне</label></div><div><input type="number" id="mp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Талан</label><div class="stat-values"><div><input type="number" id="luck_start"><label>Початк.</label></div><div><input type="number" id="luck_current"><label>Поточний</label></div></div></div> <div class="stat-box"><label>Глузд</label><div class="stat-values three-parts"><div><input type="number" id="san_start" readonly><label>Початк.</label></div><div><input type="number" id="san_current"><label>Поточний</label></div><div><input type="number" id="san_insane" readonly><label>Божевілля</label></div></div></div>`;
     
     const derivedStatsContainer = document.getElementById('derived-stats-container');
     derivedStatsContainer.innerHTML = `<div class="char-box"><label>Бонусні пошкодження</label><div class="value-split"><div class="main-value"><input type="text" id="db" readonly></div><div class="half-value">-</div><div class="fifth-value">-</div></div></div> <div class="char-box"><label>Будова</label><div class="value-split"><div class="main-value"><input type="text" id="build" readonly></div><div class="half-value">-</div><div class="fifth-value">-</div></div></div> <div class="char-box"><label>Переміщення</label><div class="value-split"><div class="main-value"><input type="text" id="move_rate" readonly></div><div class="half-value">-</div><div class="fifth-value">-</div></div></div>`;
@@ -452,7 +478,20 @@ function init() {
             const skillId = e.target.dataset.skillId;
             if (!char.checkedSkills) char.checkedSkills = {};
             char.checkedSkills[skillId] = e.target.checked;
+
+            if (e.target.checked && char.skills[skillId] === undefined) {
+                const skill = skillsData.find(s => s.name.toLowerCase().replace(/[\s()/]/g, '_') === skillId);
+                if (skill) {
+                    let baseValue;
+                    if (skill.base === 'edu') baseValue = char.stats.edu;
+                    else if (skill.base === 'dex') baseValue = Math.floor(char.stats.dex / 2);
+                    else baseValue = skill.base;
+                    char.skills[skillId] = baseValue;
+                }
+            }
+            
             saveCharactersToStorage();
+            updateUI();
             return;
         }
 
@@ -471,10 +510,15 @@ function init() {
         const id = e.target.id;
         const value = e.target.type === 'number' ? (parseInt(e.target.value, 10) || 0) : e.target.value;
 
-        if (char.info.hasOwnProperty(id)) char.info[id] = value;
-        else if (char.stats.hasOwnProperty(id)) char.stats[id] = value;
-        else if (char.currentStats.hasOwnProperty(id)) char.currentStats[id] = value;
-        else if (e.target.dataset.field && char.backstory.hasOwnProperty(e.target.dataset.field)) {
+        if (id === 'luck_start') {
+            char.stats.luck = value;
+        } else if (char.info.hasOwnProperty(id)) {
+            char.info[id] = value;
+        } else if (char.stats.hasOwnProperty(id)) {
+            char.stats[id] = value;
+        } else if (char.currentStats.hasOwnProperty(id)) {
+            char.currentStats[id] = value;
+        } else if (e.target.dataset.field && char.backstory.hasOwnProperty(e.target.dataset.field)) {
             char.backstory[e.target.dataset.field] = value;
         } else {
             const isSkill = skillsData.some(s => s.name.toLowerCase().replace(/[\s()/]/g, '_') === id);
@@ -573,7 +617,6 @@ function init() {
             };
             reader.readAsDataURL(files[0]);
         }
-        // Reset input value to allow re-uploading the same file
         e.target.value = '';
     });
     

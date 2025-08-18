@@ -195,22 +195,33 @@ input[type=number] {
     background-color: #FFFBF2;
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
-h1, h2 {
+
+h1 {
     font-family: 'Marck Script', cursive;
     text-align: center;
     margin-bottom: 1rem;
+    font-size: 2.5rem;
 }
-h1 { font-size: 2.5rem; }
+
+/* Загальні стилі для всіх h2 */
 h2 {
     font-size: 1.5rem;
     font-family: 'Special Elite', monospace;
     font-weight: bold;
-    border-top: 2px solid #5a4a3a;
-    border-bottom: 2px solid #5a4a3a;
-    padding: 0.25rem 0;
-    margin-top: 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
     text-transform: uppercase;
 }
+
+/* Специфічні стилі для заголовків секцій на аркуші персонажа */
+#character-sheet > h2 {
+    border-top: 2px solid #5a4a3a;
+    border-bottom: 2px solid #5a4a3a;
+    padding: 0.5rem 0;
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem; 
+}
+
 label {
     font-size: 0.8rem;
     color: #5a4a3a;
@@ -271,7 +282,7 @@ input[readonly] {
     display: flex;
     gap: 2rem;
     margin-bottom: 1.5rem;
-    align-items: flex-start;
+    align-items: center; /* Змінено для вертикального центрування */
 }
 .info-fields {
     flex-grow: 1;
@@ -474,6 +485,7 @@ input[readonly] {
 .skill-value-box input, .skill-value-box span { 
     padding: 0.25rem; 
     font-size: 0.9rem;
+    transition: text-shadow 0.3s ease-in-out, font-weight 0.3s ease-in-out;
 }
 .skill-value-box > *:not(:first-child) { 
     border-left: 1px solid #8a7a6a; 
@@ -481,6 +493,28 @@ input[readonly] {
 .skill-value-box input {
     text-align: center;
 }
+
+/* Нові стилі для активних вмінь */
+.skill-value-box.skill-active input,
+.skill-value-box.skill-active span,
+.weapon-card .skill-value-box.skill-active input,
+.weapon-card .skill-value-box.skill-active span {
+    font-weight: bold;
+}
+
+.skill-value-box.skill-active input,
+.weapon-card .skill-value-box.skill-active input {
+    text-shadow: 0 0 6px rgba(40, 167, 69, 0.15); /* Зелений */
+}
+.skill-value-box.skill-active span:nth-of-type(1),
+.weapon-card .skill-value-box.skill-active span:nth-of-type(1) {
+    text-shadow: 0 0 6px rgba(253, 126, 20, 0.15); /* Помаранчевий */
+}
+.skill-value-box.skill-active span:nth-of-type(2),
+.weapon-card .skill-value-box.skill-active span:nth-of-type(2) {
+    text-shadow: 0 0 6px rgba(220, 53, 69, 0.15); /* Червоний */
+}
+
 
 /* Weapons Section */
 .weapons-grid {
