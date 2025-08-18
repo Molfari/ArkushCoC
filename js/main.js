@@ -32,8 +32,8 @@ const defaultCharacter = {
 };
 
 const statTranslations = {
-    str: 'СИЛ', con: 'СТА', siz: 'РОЗ', dex: 'СПР', 
-    app: 'ЗОВ', int: 'ІНТ', pow: 'ВОЛ', edu: 'ОСВ'
+    str: 'Сила', con: 'Статура', siz: 'Розмір', dex: 'Спритність', 
+    app: 'Зовнішність', int: 'Інтелект', pow: 'Сила Волі', edu: 'Освіта'
 };
 
 // --- УПРАВЛІННЯ ДАНИМИ (localStorage) ---
