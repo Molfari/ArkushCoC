@@ -385,12 +385,29 @@ input[readonly] {
     padding: 0.5rem;
     align-items: center;
 }
+.stat-values.three-parts {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    padding: 0;
+}
+.stat-values.three-parts > div {
+    border-right: 1px solid #8a7a6a;
+    padding: 0.5rem;
+}
+.stat-values.three-parts > div:last-child {
+    border-right: none;
+}
 .stat-values div { flex: 1; }
 .stat-values input {
     font-size: 1.5rem;
     text-align: center;
     font-weight: bold;
     border-bottom: 1px dotted #3a3a3a;
+}
+.stat-values label {
+    font-size: 0.6rem;
+    line-height: 1;
 }
 .san-max-container {
     height: 100%;
@@ -468,7 +485,7 @@ input[readonly] {
 /* Weapons Section */
 .weapons-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1rem;
     margin-top: 1rem;
 }
@@ -489,21 +506,33 @@ input[readonly] {
 .weapon-card-body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-    padding: 0.5rem;
+    gap: 1rem; /* Increased gap for better spacing */
+    padding: 1rem;
 }
 .weapon-stat {
     display: flex;
     flex-direction: column;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dotted #8a7a6a;
+}
+/* Remove bottom border from the last row of stats */
+.weapon-card-body .weapon-stat:nth-last-child(-n+2) {
+    border-bottom: none;
 }
 .weapon-stat label {
     font-size: 0.7rem;
     text-align: center;
+    margin-bottom: 0.25rem;
 }
 .weapon-stat input {
     text-align: center;
-    border-bottom: 1px dotted #3a3a3a;
+    border-bottom: none;
     padding: 0.25rem;
+    font-size: 1rem;
+}
+/* Special styling for the skill stat */
+.weapon-stat.skill .skill-value-box {
+    margin: 0 auto; /* Center the box within the grid cell */
 }
 
 .tab-content { display: none; }

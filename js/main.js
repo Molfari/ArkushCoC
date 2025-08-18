@@ -18,12 +18,14 @@ const defaultCharacter = {
         residence: '',
         portrait: ''
     },
-    stats: { str: 50, con: 50, siz: 50, dex: 50, app: 50, int: 50, pow: 50, edu: 50 },
-    currentStats: { hp_current: 10, mp_current: 10, san_current: 50, san_max: 99 },
+    stats: { str: 50, con: 50, siz: 50, dex: 50, app: 50, int: 50, pow: 50, edu: 50, luck: 50 },
+    currentStats: { hp_current: 10, mp_current: 10, san_current: 50, san_max: 99, luck_current: 50 },
     skills: {},
     checkedSkills: {},
     weapons: [
         { name: 'Рукопашний бій', skill: 25, damage: '1D3+БП', range: 'Дотик', attacks: 1, ammo: '-', malfunction: '-' },
+        { name: '', skill: '', damage: '', range: '', attacks: '', ammo: '', malfunction: '' },
+        { name: '', skill: '', damage: '', range: '', attacks: '', ammo: '', malfunction: '' },
         { name: '', skill: '', damage: '', range: '', attacks: '', ammo: '', malfunction: '' }
     ],
     backstory: { description: '', traits: '', beliefs: '', people: '' },
@@ -171,17 +173,24 @@ function updateUI() {
     const char = characters.find(c => c.id === activeCharacterId);
     if (!char) return;
 
-    const { str, con, siz, dex, pow, edu } = char.stats;
+    const { str, con, siz, dex, pow, edu, luck } = char.stats;
+    const { san_current } = char.currentStats;
     const { age } = char.info;
 
     for (const key in char.stats) {
-        document.getElementById(`${key}_half`).textContent = Math.floor(char.stats[key] / 2);
-        document.getElementById(`${key}_fifth`).textContent = Math.floor(char.stats[key] / 5);
+        const elHalf = document.getElementById(`${key}_half`);
+        const elFifth = document.getElementById(`${key}_fifth`);
+        if(elHalf) elHalf.textContent = Math.floor(char.stats[key] / 2);
+        if(elFifth) elFifth.textContent = Math.floor(char.stats[key] / 5);
     }
     
     document.getElementById('hp_max').value = Math.floor((con + siz) / 10);
     document.getElementById('mp_max').value = Math.floor(pow / 5);
     document.getElementById('san_start').value = pow;
+    document.getElementById('san_insane').value = Math.floor(san_current / 5);
+    
+    const luckStartEl = document.getElementById('luck_start');
+    if (luckStartEl) luckStartEl.value = luck;
 
     const { db, build } = calculateDBAndBuild(str, siz);
     document.getElementById('db').value = db;
@@ -201,6 +210,17 @@ function updateUI() {
         document.getElementById(`${skillId}_half`).textContent = Math.floor(value / 2);
         document.getElementById(`${skillId}_fifth`).textContent = Math.floor(value / 5);
     });
+
+    // Update weapon skills
+    if (char.weapons) {
+        char.weapons.forEach((weapon, index) => {
+            const skillValue = weapon.skill || 0;
+            const halfEl = document.getElementById(`weapon_${index}_half`);
+            const fifthEl = document.getElementById(`weapon_${index}_fifth`);
+            if (halfEl) halfEl.textContent = Math.floor(skillValue / 2);
+            if (fifthEl) fifthEl.textContent = Math.floor(skillValue / 5);
+        });
+    }
 }
 
 // --- ЛОГІКА ЗБРОЇ ---
@@ -222,10 +242,17 @@ function renderWeapons() {
                 <input type="text" value="${weapon.name}" data-weapon-index="${index}" data-field="name" placeholder="Назва зброї">
             </div>
             <div class="weapon-card-body">
-                <div class="weapon-stat"><label>Вміння %</label><input type="number" value="${weapon.skill}" data-weapon-index="${index}" data-field="skill"></div>
+                <div class="weapon-stat skill">
+                    <label>Вміння %</label>
+                    <div class="skill-value-box">
+                        <input type="number" value="${weapon.skill || ''}" data-weapon-index="${index}" data-field="skill">
+                        <span id="weapon_${index}_half"></span>
+                        <span id="weapon_${index}_fifth"></span>
+                    </div>
+                </div>
                 <div class="weapon-stat"><label>Пошкодж.</label><input type="text" value="${weapon.damage}" data-weapon-index="${index}" data-field="damage"></div>
                 <div class="weapon-stat"><label>Дальність</label><input type="text" value="${weapon.range}" data-weapon-index="${index}" data-field="range"></div>
-                <div class="weapon-stat"><label>Атак</label><input type="number" value="${weapon.attacks}" data-weapon-index="${index}" data-field="attacks"></div>
+                <div class="weapon-stat"><label>Атак</label><input type="number" value="${weapon.attacks || ''}" data-weapon-index="${index}" data-field="attacks"></div>
                 <div class="weapon-stat"><label>Набоїв</label><input type="text" value="${weapon.ammo}" data-weapon-index="${index}" data-field="ammo"></div>
                 <div class="weapon-stat"><label>Несправн.</label><input type="text" value="${weapon.malfunction}" data-weapon-index="${index}" data-field="malfunction"></div>
             </div>
@@ -382,9 +409,9 @@ function init() {
             </div>
         </div>`
     ).join('');
-
+    
     const currentStatsContainer = document.getElementById('current-stats-container');
-    currentStatsContainer.innerHTML = `<div class="stat-box"><label>Очки здоров'я</label><div class="stat-values"><div><input type="number" id="hp_current"><label>Поточне</label></div><div><input type="number" id="hp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Очки магії</label><div class="stat-values"><div><input type="number" id="mp_current"><label>Поточне</label></div><div><input type="number" id="mp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Глузд</label><div class="stat-values"><div><input type="number" id="san_current"><label>Поточний</label></div><div><input type="number" id="san_start" readonly><label>Початк.</label></div></div></div> <div class="stat-box"><label>Макс. глузд</label><div class="stat-values san-max-container"><input type="number" id="san_max"></div></div>`;
+    currentStatsContainer.innerHTML = `<div class="stat-box"><label>Очки здоров'я</label><div class="stat-values"><div><input type="number" id="hp_current"><label>Поточне</label></div><div><input type="number" id="hp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Очки магії</label><div class="stat-values"><div><input type="number" id="mp_current"><label>Поточне</label></div><div><input type="number" id="mp_max" readonly><label>Макс.</label></div></div></div> <div class="stat-box"><label>Талан</label><div class="stat-values"><div><input type="number" id="luck_start" readonly><label>Початк.</label></div><div><input type="number" id="luck_current"><label>Поточний</label></div></div></div> <div class="stat-box"><label>Глузд</label><div class="stat-values three-parts"><div><input type="number" id="san_start" readonly><label>Початк.</label></div><div><input type="number" id="san_current"><label>Поточний</label></div><div><input type="number" id="san_insane" readonly><label>Божевілля</label></div></div></div>`;
     
     const derivedStatsContainer = document.getElementById('derived-stats-container');
     derivedStatsContainer.innerHTML = `<div class="char-box"><label>Бонусні пошкодження</label><div class="value-split"><div class="main-value"><input type="text" id="db" readonly></div><div class="half-value">-</div><div class="fifth-value">-</div></div></div> <div class="char-box"><label>Будова</label><div class="value-split"><div class="main-value"><input type="text" id="build" readonly></div><div class="half-value">-</div><div class="fifth-value">-</div></div></div> <div class="char-box"><label>Переміщення</label><div class="value-split"><div class="main-value"><input type="text" id="move_rate" readonly></div><div class="half-value">-</div><div class="fifth-value">-</div></div></div>`;
@@ -435,6 +462,7 @@ function init() {
             const value = e.target.type === 'number' ? parseInt(e.target.value, 10) || 0 : e.target.value;
             char.weapons[weaponIndex][field] = value;
             saveCharactersToStorage();
+            if(field === 'skill') updateUI();
             return;
         }
 
