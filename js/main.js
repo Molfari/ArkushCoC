@@ -22,6 +22,10 @@ const defaultCharacter = {
     currentStats: { hp_current: 10, mp_current: 10, san_current: 50, san_max: 99 },
     skills: {},
     checkedSkills: {},
+    weapons: [
+        { name: 'Рукопашний бій', skill: 25, damage: '1D3+БП', range: 'Дотик', attacks: 1, ammo: '-', malfunction: '-' },
+        { name: '', skill: '', damage: '', range: '', attacks: '', ammo: '', malfunction: '' }
+    ],
     backstory: { description: '', traits: '', beliefs: '', people: '' },
     notes: [],
     inventory: []
@@ -157,6 +161,7 @@ function renderCharacterSheet() {
         }
     });
 
+    renderWeapons();
     renderNotes();
     renderInventory();
     updateUI();
@@ -195,6 +200,37 @@ function updateUI() {
         if (el && el.value != value) el.value = value;
         document.getElementById(`${skillId}_half`).textContent = Math.floor(value / 2);
         document.getElementById(`${skillId}_fifth`).textContent = Math.floor(value / 5);
+    });
+}
+
+// --- ЛОГІКА ЗБРОЇ ---
+function renderWeapons() {
+    const char = characters.find(c => c.id === activeCharacterId);
+    if (!char) return;
+    const container = document.getElementById('weapons-container');
+    container.innerHTML = ''; 
+
+    if (!char.weapons) {
+        char.weapons = JSON.parse(JSON.stringify(defaultCharacter.weapons));
+    }
+
+    char.weapons.forEach((weapon, index) => {
+        const card = document.createElement('div');
+        card.className = 'weapon-card';
+        card.innerHTML = `
+            <div class="weapon-card-header">
+                <input type="text" value="${weapon.name}" data-weapon-index="${index}" data-field="name" placeholder="Назва зброї">
+            </div>
+            <div class="weapon-card-body">
+                <div class="weapon-stat"><label>Вміння %</label><input type="number" value="${weapon.skill}" data-weapon-index="${index}" data-field="skill"></div>
+                <div class="weapon-stat"><label>Пошкодж.</label><input type="text" value="${weapon.damage}" data-weapon-index="${index}" data-field="damage"></div>
+                <div class="weapon-stat"><label>Дальність</label><input type="text" value="${weapon.range}" data-weapon-index="${index}" data-field="range"></div>
+                <div class="weapon-stat"><label>Атак</label><input type="number" value="${weapon.attacks}" data-weapon-index="${index}" data-field="attacks"></div>
+                <div class="weapon-stat"><label>Набоїв</label><input type="text" value="${weapon.ammo}" data-weapon-index="${index}" data-field="ammo"></div>
+                <div class="weapon-stat"><label>Несправн.</label><input type="text" value="${weapon.malfunction}" data-weapon-index="${index}" data-field="malfunction"></div>
+            </div>
+        `;
+        container.appendChild(card);
     });
 }
 
@@ -389,6 +425,15 @@ function init() {
             const skillId = e.target.dataset.skillId;
             if (!char.checkedSkills) char.checkedSkills = {};
             char.checkedSkills[skillId] = e.target.checked;
+            saveCharactersToStorage();
+            return;
+        }
+
+        const weaponIndex = e.target.dataset.weaponIndex;
+        if (weaponIndex !== undefined) {
+            const field = e.target.dataset.field;
+            const value = e.target.type === 'number' ? parseInt(e.target.value, 10) || 0 : e.target.value;
+            char.weapons[weaponIndex][field] = value;
             saveCharactersToStorage();
             return;
         }

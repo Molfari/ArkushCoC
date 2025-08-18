@@ -465,17 +465,46 @@ input[readonly] {
     text-align: center;
 }
 
-
-.weapons-table { width: 100%; margin-top: 1rem; border-collapse: collapse; table-layout: fixed; }
-.weapons-table th, .weapons-table td {
-    border: 1px solid #8a7a6a;
-    padding: 0.5rem;
-    text-align: center;
-    word-wrap: break-word;
+/* Weapons Section */
+.weapons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
 }
-.weapons-table .weapon-name-col { width: 30%; }
-.weapons-table th { font-size: 0.8rem; }
-.weapons-table input { text-align: center; border-bottom: 1px dotted #3a3a3a; }
+.weapon-card {
+    border: 1px solid #8a7a6a;
+    border-radius: 5px;
+    background-color: #FFFBF2;
+}
+.weapon-card-header {
+    padding: 0.5rem;
+    border-bottom: 1px solid #8a7a6a;
+}
+.weapon-card-header input {
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+}
+.weapon-card-body {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+.weapon-stat {
+    display: flex;
+    flex-direction: column;
+}
+.weapon-stat label {
+    font-size: 0.7rem;
+    text-align: center;
+}
+.weapon-stat input {
+    text-align: center;
+    border-bottom: 1px dotted #3a3a3a;
+    padding: 0.25rem;
+}
 
 .tab-content { display: none; }
 .tab-content.active { display: block; }
@@ -681,6 +710,9 @@ input[readonly] {
     }
     .skill-value-box {
         width: 110px;
+    }
+    .weapons-grid {
+        grid-template-columns: 1fr;
     }
 }
 
