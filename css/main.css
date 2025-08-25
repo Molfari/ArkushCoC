@@ -494,24 +494,25 @@ input[readonly] {
     text-align: center;
 }
 
-/* Нові стилі для активних вмінь */
-.skill-value-box.skill-active input,
-.skill-value-box.skill-active span,
-.weapon-card .skill-value-box.skill-active input,
-.weapon-card .skill-value-box.skill-active span {
+/* Кольорові тіні для значень */
+.char-box .main-value input,
+.skill-value-box input,
+.weapon-card .skill-value-box input {
     font-weight: bold;
-}
-
-.skill-value-box.skill-active input,
-.weapon-card .skill-value-box.skill-active input {
     text-shadow: 0 0 6px rgba(40, 167, 69, 0.15); /* Зелений */
 }
-.skill-value-box.skill-active span:nth-of-type(1),
-.weapon-card .skill-value-box.skill-active span:nth-of-type(1) {
+
+.char-box .half-value,
+.skill-value-box span:nth-of-type(1),
+.weapon-card .skill-value-box span:nth-of-type(1) {
+    font-weight: bold;
     text-shadow: 0 0 6px rgba(253, 126, 20, 0.15); /* Помаранчевий */
 }
-.skill-value-box.skill-active span:nth-of-type(2),
-.weapon-card .skill-value-box.skill-active span:nth-of-type(2) {
+
+.char-box .fifth-value,
+.skill-value-box span:nth-of-type(2),
+.weapon-card .skill-value-box span:nth-of-type(2) {
+    font-weight: bold;
     text-shadow: 0 0 6px rgba(220, 53, 69, 0.15); /* Червоний */
 }
 

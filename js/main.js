@@ -207,21 +207,28 @@ function updateUI() {
         const el = document.getElementById(skillId);
         const elHalf = document.getElementById(`${skillId}_half`);
         const elFifth = document.getElementById(`${skillId}_fifth`);
-        const valueBox = el.closest('.skill-value-box');
-        const isChecked = char.checkedSkills && char.checkedSkills[skillId];
-
-        if (isChecked) {
-            valueBox.classList.add('skill-active');
-            const value = (char.skills[skillId] !== undefined) ? char.skills[skillId] : 0;
-            
-            if (el) el.value = value;
-            if (elHalf) elHalf.textContent = Math.floor(value / 2);
-            if (elFifth) elFifth.textContent = Math.floor(value / 5);
+        
+        let value;
+        if (char.skills[skillId] !== undefined) {
+            value = char.skills[skillId];
         } else {
+            const skillInfo = skillsData.find(s => s.name.toLowerCase().replace(/[\s()/]/g, '_') === skillId);
+            if (skillInfo.base === 'edu') {
+                value = edu;
+            } else if (skillInfo.base === 'dex') {
+                value = Math.floor(dex / 2);
+            } else {
+                value = skillInfo.base;
+            }
+        }
+        
+        if (el) el.value = value;
+        if (elHalf) elHalf.textContent = Math.floor(value / 2);
+        if (elFifth) elFifth.textContent = Math.floor(value / 5);
+
+        const valueBox = el.closest('.skill-value-box');
+        if (valueBox) {
             valueBox.classList.remove('skill-active');
-            if (el) el.value = '';
-            if (elHalf) elHalf.textContent = '';
-            if (elFifth) elFifth.textContent = '';
         }
     });
 
@@ -238,11 +245,7 @@ function updateUI() {
             if (halfEl) {
                 const valueBox = halfEl.closest('.skill-value-box');
                 if (valueBox) {
-                    if (skillValue > 0) {
-                        valueBox.classList.add('skill-active');
-                    } else {
-                        valueBox.classList.remove('skill-active');
-                    }
+                    valueBox.classList.remove('skill-active');
                 }
             }
         });
@@ -478,20 +481,7 @@ function init() {
             const skillId = e.target.dataset.skillId;
             if (!char.checkedSkills) char.checkedSkills = {};
             char.checkedSkills[skillId] = e.target.checked;
-
-            if (e.target.checked && char.skills[skillId] === undefined) {
-                const skill = skillsData.find(s => s.name.toLowerCase().replace(/[\s()/]/g, '_') === skillId);
-                if (skill) {
-                    let baseValue;
-                    if (skill.base === 'edu') baseValue = char.stats.edu;
-                    else if (skill.base === 'dex') baseValue = Math.floor(char.stats.dex / 2);
-                    else baseValue = skill.base;
-                    char.skills[skillId] = baseValue;
-                }
-            }
-            
             saveCharactersToStorage();
-            updateUI();
             return;
         }
 
